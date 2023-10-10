@@ -7,15 +7,20 @@ function Box(props) {
     let wasStopped = false;
 
     useFrame((state) => {
-        state.camera.position.lerp({ x: 4, y: 4 + props.length, z: 4 }, 0.5);
-        state.camera.lookAt(0, props.length, 0);
+        state.camera.position.lerp({ x: 4, y: 4 + props.id, z: 4 }, 0.5);
+        state.camera.lookAt(0, props.id, 0);
 
-        if (props.length > 0)
+        if (props.id > 0)
             if (props.animation === true) {
                 meshRef.current.position[props.direction] += speed;
-            } else if (wasStopped === false) {
-                wasStopped = true;
-                props.changePosition(meshRef.current.position);
+            } else if (
+                wasStopped === false &&
+                props.stopInfiniteLoop === undefined
+            ) {
+                {
+                    wasStopped = true;
+                    props.changePosition(meshRef.current.position);
+                }
             }
     });
 

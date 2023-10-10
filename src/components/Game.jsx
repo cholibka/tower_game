@@ -1,42 +1,38 @@
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import Box from "./Box";
 import "./Game.css";
-import { useState, useEffect, cloneElement } from "react";
+import { useState, useEffect, cloneElement, useRef } from "react";
 
 function Game() {
     const boxHeight = 1;
-    const scale = [1, 1, 1];
+    const scaleVector = [1, 1, 1];
     const [gameStarted, setGameStarted] = useState(false);
     const [direction, setDirection] = useState("z");
+    const boxSize = useRef([3, boxHeight, 3]);
     const [boxesOnCanvas, setBoxesOnCanvas] = useState([
         <Box
             position={[0, 0, 0]}
             size={[3, boxHeight, 3]}
             color="hsl(300, 100%, 50%)"
             key={0}
-            length={0}
+            id={0}
             direction={"z"}
             animation={true}
-            scale={scale}
+            scale={scaleVector}
         />,
     ]);
-    const [boxSize, setBoxSize] = useState([3, boxHeight, 3]);
 
     const changePosition = (value) => {
         setBoxesOnCanvas((prevBoxesOnCanvas) => {
             return prevBoxesOnCanvas.map((box) => {
-                if (box.props.length === boxesOnCanvas.length) {
-                    let prevBox = boxesOnCanvas.find((b) => {
-                        return b.props.length === boxesOnCanvas.length - 1;
-                    });
-                    console.log(prevBox);
+                if (box.props.id === boxesOnCanvas.length) {
+                    const prevBox = boxesOnCanvas[box.props.id - 1];
                     value = Array.from(value);
                     const currentBoxDirection =
                         box.props.direction == "x" ? 0 : 2;
                     const delta =
                         value[currentBoxDirection] -
                         prevBox.props.position[currentBoxDirection];
-
                     const overhangSize = Math.abs(delta);
                     const size = box.props.size[currentBoxDirection];
                     const overlap = size - overhangSize;
@@ -50,27 +46,26 @@ function Game() {
                             currentBoxDirection === 2
                                 ? overlap
                                 : box.props.size[2];
-                        // setBoxSize([newX, boxHeight, newZ]);
-                        const newXScale =
-                            currentBoxDirection === 0
-                                ? overlap / size
-                                : scale[0];
-                        const newZScale =
-                            currentBoxDirection === 2
-                                ? overlap / size
-                                : scale[2];
-
-                        const newPX =
+                        const newPositionX =
                             currentBoxDirection === 0
                                 ? value[0] - delta / 2
                                 : value[0];
-                        const newPZ =
+                        const newPositionZ =
                             currentBoxDirection === 2
                                 ? value[2] - delta / 2
                                 : value[2];
+                        const scale = [
+                            currentBoxDirection === 0 ? overlap / size : 1,
+                            1,
+                            currentBoxDirection === 2 ? overlap / size : 1,
+                        ];
+
+                        boxSize.current = [newX, boxHeight, newZ];
+                        console.log(boxSize.current);
                         return cloneElement(box, {
-                            // position: [newPX, value[1], newPZ],
-                            // scale: [newXScale, scale[1], newZScale],
+                            position: [newPositionX, value[1], newPositionZ],
+                            scale: scale,
+                            stopInfiniteLoop: true,
                         });
                     }
                 }
@@ -79,33 +74,21 @@ function Game() {
         });
     };
 
-    const AddToStack = () => {
+    function timeout(delay) {
+        return new Promise((res) => setTimeout(res, delay));
+    }
+
+    const AddToStack = async () => {
         if (!gameStarted) setGameStarted(true);
 
         const y = boxHeight * boxesOnCanvas.length;
         const x = direction == "x" ? 0 : -10;
         const z = direction == "z" ? 0 : -10;
 
-        setBoxesOnCanvas((prevBoxesOnCanvas) => [
-            ...prevBoxesOnCanvas,
-            <Box
-                position={[x, y, z]}
-                size={boxSize}
-                color={`hsl(${300 + boxesOnCanvas.length * 8}, 100%, 50%)`}
-                key={boxesOnCanvas.length}
-                length={boxesOnCanvas.length}
-                direction={direction == "z" ? "x" : "z"}
-                animation={true}
-                changePosition={changePosition}
-                scale={scale}
-            />,
-        ]);
-        setDirection((direction) => (direction == "z" ? "x" : "z"));
-
         if (boxesOnCanvas.length > 1) {
             setBoxesOnCanvas((prevBoxesOnCanvas) => {
                 return prevBoxesOnCanvas.map((box) => {
-                    if (box.props.length === boxesOnCanvas.length - 1) {
+                    if (box.props.id === boxesOnCanvas.length - 1) {
                         return cloneElement(box, {
                             animation: false,
                         });
@@ -114,6 +97,24 @@ function Game() {
                 });
             });
         }
+
+        await timeout(100);
+
+        setBoxesOnCanvas((prevBoxesOnCanvas) => [
+            ...prevBoxesOnCanvas,
+            <Box
+                position={[x, y, z]}
+                size={boxSize.current}
+                color={`hsl(${300 + boxesOnCanvas.length * 8}, 100%, 50%)`}
+                key={boxesOnCanvas.length}
+                id={boxesOnCanvas.length}
+                direction={direction == "z" ? "x" : "z"}
+                animation={true}
+                changePosition={changePosition}
+                scale={scaleVector}
+            />,
+        ]);
+        setDirection((direction) => (direction == "z" ? "x" : "z"));
     };
 
     return (
