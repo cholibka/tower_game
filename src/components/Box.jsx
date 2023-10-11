@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber";
 
 function Box(props) {
     const meshRef = useRef();
-    const speed = 0.15;
+    const speed = 0.1;
     let wasStopped = false;
 
     useFrame((state) => {
@@ -17,10 +17,10 @@ function Box(props) {
                 wasStopped === false &&
                 props.stopInfiniteLoop === undefined
             ) {
-                {
-                    wasStopped = true;
-                    props.changePosition(meshRef.current.position);
-                }
+                wasStopped = true;
+                //input lag :(
+                meshRef.current.position[props.direction] -= speed * 2;
+                props.changePosition(meshRef.current.position);
             }
     });
 
