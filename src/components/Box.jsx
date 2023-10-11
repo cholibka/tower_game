@@ -7,7 +7,7 @@ function Box(props) {
     let wasStopped = false;
 
     useFrame((state) => {
-        state.camera.position.lerp({ x: 4, y: 4 + props.id, z: 4 }, 0.5);
+        state.camera.position.lerp({ x: 4, y: 4 + props.id, z: 4 }, 1);
         state.camera.lookAt(0, props.id, 0);
 
         if (props.id > 0)

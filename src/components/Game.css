@@ -1,4 +1,26 @@
 .game_container {
     width: 100vw !important;
     height: 100vh !important;
+    position: fixed;
+}
+
+.startGame {
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    animation: fontbulger 3s infinite;
+    font-weight: bold;
+    position: fixed;
+}
+
+@keyframes fontbulger {
+    0%,
+    100% {
+        font-size: 30px;
+    }
+
+    50% {
+        font-size: 50px;
+    }
 }

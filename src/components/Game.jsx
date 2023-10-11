@@ -2,6 +2,8 @@ import { Canvas } from "@react-three/fiber";
 import Box from "./Box";
 import "./Game.css";
 import { useState, cloneElement, useRef } from "react";
+import Score from "./Score";
+import GameOver from "./GameOver";
 
 function Game() {
     const boxHeight = 1;
@@ -22,6 +24,24 @@ function Game() {
             scale={scaleVector.current}
         />,
     ]);
+    const gameOver = useRef(false);
+
+    const calculatePosition = (currentBoxDirection, value, delta, v) => {
+        const newPositionX =
+            currentBoxDirection === 0
+                ? value[0] - delta / 2
+                : v === false
+                ? value[0]
+                : 0;
+        const newPositionZ =
+            currentBoxDirection === 2
+                ? value[2] - delta / 2
+                : v === false
+                ? value[2]
+                : 0;
+
+        return [newPositionX, v === false ? value[1] : 0, newPositionZ];
+    };
 
     const changePosition = (value) => {
         setBoxesOnCanvas((prevBoxesOnCanvas) => {
@@ -48,24 +68,21 @@ function Game() {
                                 ? overlap
                                 : box.props.size[2];
 
-                        const newPositionX =
-                            currentBoxDirection === 0
-                                ? value[0] - delta / 2
-                                : value[0];
-                        const newPositionZ =
-                            currentBoxDirection === 2
-                                ? value[2] - delta / 2
-                                : value[2];
+                        let v;
+                        const newPosition = calculatePosition(
+                            currentBoxDirection,
+                            value,
+                            delta,
+                            (v = false)
+                        );
 
-                        positionVector.current = [
-                            currentBoxDirection === 0
-                                ? value[0] - delta / 2
-                                : 0,
-                            positionVector.current[1],
-                            currentBoxDirection === 2
-                                ? value[2] - delta / 2
-                                : 0,
-                        ];
+                        positionVector.current = calculatePosition(
+                            currentBoxDirection,
+                            value,
+                            delta,
+                            (v = true)
+                        );
+
                         const scale = [
                             currentBoxDirection === 0
                                 ? overlap / size
@@ -75,16 +92,14 @@ function Game() {
                                 ? overlap / size
                                 : scaleVector.current[2],
                         ];
-
-                        console.log(positionVector.current);
-
                         boxSize.current = [newX, boxHeight, newZ];
-                        console.log(boxSize.current);
                         return cloneElement(box, {
-                            position: [newPositionX, value[1], newPositionZ],
+                            position: newPosition,
                             scale: scale,
                             stopInfiniteLoop: true,
                         });
+                    } else {
+                        gameOver.current = true;
                     }
                 }
                 return box;
@@ -98,26 +113,26 @@ function Game() {
 
     const AddToStack = async () => {
         if (!gameStarted) setGameStarted(true);
-        else {
-            const y = boxHeight * boxesOnCanvas.length;
-            const x = direction == "x" ? 0 : -10;
-            const z = direction == "z" ? 0 : -10;
+        const y = boxHeight * boxesOnCanvas.length;
+        const x = direction == "x" ? 0 : -10;
+        const z = direction == "z" ? 0 : -10;
 
-            if (boxesOnCanvas.length > 1) {
-                setBoxesOnCanvas((prevBoxesOnCanvas) => {
-                    return prevBoxesOnCanvas.map((box) => {
-                        if (box.props.id === boxesOnCanvas.length - 1) {
-                            return cloneElement(box, {
-                                animation: false,
-                            });
-                        }
-                        return box;
-                    });
+        if (boxesOnCanvas.length > 1) {
+            setBoxesOnCanvas((prevBoxesOnCanvas) => {
+                return prevBoxesOnCanvas.map((box) => {
+                    if (box.props.id === boxesOnCanvas.length - 1) {
+                        return cloneElement(box, {
+                            animation: false,
+                        });
+                    }
+                    return box;
                 });
-            }
+            });
+        }
 
-            await timeout(100);
-
+        await timeout(100);
+        if (!gameOver.current) {
+            console.log(gameOver.current);
             setBoxesOnCanvas((prevBoxesOnCanvas) => [
                 ...prevBoxesOnCanvas,
                 <Box
@@ -142,6 +157,12 @@ function Game() {
 
     return (
         <div className="game_container">
+            <Score
+                score={
+                    boxesOnCanvas.length - 2 >= 0 ? boxesOnCanvas.length - 2 : 0
+                }
+            />
+            {!gameStarted ? <p className="startGame">Click to start!</p> : null}
             <Canvas
                 orthographic
                 camera={{ position: [4, 4, 4], zoom: 100 }}
@@ -155,6 +176,15 @@ function Game() {
                 />
                 {boxesOnCanvas}
             </Canvas>
+            {gameOver.current ? (
+                <GameOver
+                    score={
+                        boxesOnCanvas.length - 2 >= 0
+                            ? boxesOnCanvas.length - 2
+                            : 0
+                    }
+                />
+            ) : null}
         </div>
     );
 }
