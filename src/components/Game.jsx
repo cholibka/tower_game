@@ -4,6 +4,7 @@ import "./Game.css";
 import { useState, cloneElement, useRef } from "react";
 import Score from "./Score";
 import GameOver from "./GameOver";
+import { isMobile } from "react-device-detect";
 
 function Game() {
     const boxHeight = 1;
@@ -15,7 +16,7 @@ function Game() {
     const [boxesOnCanvas, setBoxesOnCanvas] = useState([
         <Box
             position={positionVector.current}
-            size={[3, boxHeight, 3]}
+            size={boxSize.current}
             color="hsl(300, 100%, 50%)"
             key={0}
             id={0}
@@ -193,7 +194,7 @@ function Game() {
             {!gameStarted ? <p className="startGame">Click to start!</p> : null}
             <Canvas
                 orthographic
-                camera={{ position: [4, 4, 4], zoom: 100 }}
+                camera={{ position: [4, 4, 4], zoom: isMobile ? 75 : 100 }}
                 onClick={AddToStack}
             >
                 <ambientLight color={0xffffff} intensity={0.6} />
