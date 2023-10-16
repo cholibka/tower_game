@@ -13,13 +13,12 @@ function Box(props) {
         if (props.id > 0)
             if (props.animation === true) {
                 meshRef.current.position[props.direction] += speed;
+                props.checkPosition(meshRef.current.position);
             } else if (
                 wasStopped === false &&
                 props.stopInfiniteLoop === undefined
             ) {
                 wasStopped = true;
-                //input lag :(
-                meshRef.current.position[props.direction] -= speed * 2;
                 props.changePosition(meshRef.current.position);
             }
     });

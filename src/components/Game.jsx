@@ -20,7 +20,7 @@ function Game() {
             key={0}
             id={0}
             direction={"z"}
-            animation={true}
+            animation={false}
             scale={scaleVector.current}
         />,
     ]);
@@ -41,6 +41,33 @@ function Game() {
                 : 0;
 
         return [newPositionX, v === false ? value[1] : 0, newPositionZ];
+    };
+
+    const checkPosition = (value) => {
+        setBoxesOnCanvas((prevBoxesOnCanvas) => {
+            return prevBoxesOnCanvas.map((box) => {
+                if (box.props.id === boxesOnCanvas.length) {
+                    const prevBox = boxesOnCanvas[box.props.id - 1];
+                    value = Array.from(value);
+                    const currentBoxDirection =
+                        box.props.direction == "x" ? 0 : 2;
+                    let prevBoxEndVector =
+                        prevBox.props.position[currentBoxDirection] +
+                        prevBox.props.size[currentBoxDirection] / 2;
+                    let currentBoxStartVector =
+                        value[currentBoxDirection] -
+                        box.props.size[currentBoxDirection] / 2;
+
+                    if (currentBoxStartVector > prevBoxEndVector) {
+                        gameOver.current = true;
+                        return cloneElement(box, {
+                            animation: false,
+                        });
+                    }
+                }
+                return box;
+            });
+        });
     };
 
     const changePosition = (value) => {
@@ -149,6 +176,7 @@ function Game() {
                     animation={true}
                     changePosition={changePosition}
                     scale={scaleVector.current}
+                    checkPosition={checkPosition}
                 />,
             ]);
             setDirection((direction) => (direction == "z" ? "x" : "z"));
