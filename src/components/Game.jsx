@@ -1,10 +1,12 @@
 import { Canvas } from "@react-three/fiber";
 import Box from "./Box";
 import "./Game.css";
-import { useState, cloneElement, useRef } from "react";
+import { useState, cloneElement, useRef, useEffect } from "react";
 import Score from "./Score";
 import GameOver from "./GameOver";
 import { isMobile } from "react-device-detect";
+import Leaderboard from "./Leaderboard";
+import { v4 as uuidv4 } from "uuid";
 
 function Game() {
     const boxHeight = 1;
@@ -26,6 +28,51 @@ function Game() {
         />,
     ]);
     const gameOver = useRef(false);
+    const [showLeaderboard, setShowLeaderboard] = useState(false);
+    const inputRef = useRef(null);
+    const [scores, setScores] = useState([]);
+
+    const addNewScore = () => {
+        let username = inputRef.current.value;
+        if (username === "") username = "Gall Anonim";
+
+        const newScore = {
+            id: uuidv4(),
+            username: username,
+            score: boxesOnCanvas.length - 2 >= 0 ? boxesOnCanvas.length - 2 : 0,
+        };
+        // fetch("http://localhost:3000/scores", {
+        //     method: "POST",
+        //     headers: {
+        //         "Content-Type": "application/json",
+        //     },
+        //     body: JSON.stringify(newScore),
+        // });
+    };
+    const refresh = () => {
+        addNewScore();
+        window.location.reload();
+    };
+    const showLeaderBoard = async () => {
+        addNewScore();
+
+        await timeout(100);
+
+        // fetch("http://localhost:3000/scores")
+        fetch("./db.json")
+            .then((response) => response.json())
+            .then((response) => {
+                setScores(response.scores);
+            })
+            // .then((result) => {
+            //     setScores(result);
+            // })
+            .catch((error) => console.log("error", error));
+
+        // await timeout(100);
+
+        setShowLeaderboard((b) => !b);
+    };
 
     const calculatePosition = (currentBoxDirection, value, delta, v) => {
         const newPositionX =
@@ -95,20 +142,18 @@ function Game() {
                             currentBoxDirection === 2
                                 ? overlap
                                 : box.props.size[2];
-
-                        let v;
                         const newPosition = calculatePosition(
                             currentBoxDirection,
                             value,
                             delta,
-                            (v = false)
+                            false
                         );
 
                         positionVector.current = calculatePosition(
                             currentBoxDirection,
                             value,
                             delta,
-                            (v = true)
+                            true
                         );
 
                         const scale = [
@@ -160,7 +205,6 @@ function Game() {
 
         await timeout(100);
         if (!gameOver.current) {
-            console.log(gameOver.current);
             setBoxesOnCanvas((prevBoxesOnCanvas) => [
                 ...prevBoxesOnCanvas,
                 <Box
@@ -205,14 +249,20 @@ function Game() {
                 />
                 {boxesOnCanvas}
             </Canvas>
-            {gameOver.current ? (
+            {gameOver.current && showLeaderboard === false ? (
                 <GameOver
                     score={
                         boxesOnCanvas.length - 2 >= 0
                             ? boxesOnCanvas.length - 2
                             : 0
                     }
+                    showLeaderboard={showLeaderBoard}
+                    inputRef={inputRef}
+                    refresh={refresh}
                 />
+            ) : null}
+            {gameOver.current && showLeaderboard === true ? (
+                <Leaderboard scores={scores} />
             ) : null}
         </div>
     );

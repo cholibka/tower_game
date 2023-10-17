@@ -18,10 +18,12 @@
         "@react-three/drei": "^9.86.3",
         "@react-three/fiber": "^8.14.4",
         "@types/three": "^0.156.0",
+        "json-server": "^0.17.4",
         "react": "^18.2.0",
         "react-device-detect": "^2.2.3",
         "react-dom": "^18.2.0",
-        "three": "^0.157.0"
+        "three": "^0.157.0",
+        "uuid": "^9.0.1"
     },
     "devDependencies": {
         "@types/react": "^18.2.15",
